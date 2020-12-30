@@ -1,5 +1,10 @@
-QUICK AND DIRTY
-===============
+# unpv13e
+
+This is a fork of unpbook/unpv13e.
+
+# Original README
+
+## QUICK AND DIRTY
 
 Execute the following from the src/ directory:
 
@@ -23,8 +28,7 @@ If all that works, you're all set to start compiling individual programs.
 
 Notice that all the source code assumes tabs every 4 columns, not 8.
 
-MORE DETAILS
-============
+## MORE DETAILS
 
 5.  If you need to make any changes to the "unp.h" header, notice that it
     is a hard link in each directory, so you only need to change it once.
@@ -53,8 +57,7 @@ MORE DETAILS
     "test" in the filename: they are probably a quick test program that I
     wrote to check something, and may or may not work.
 
-NOTES
------
+## NOTES
 
 - Many systems do not have correct function prototypes for the socket
   functions, and this can cause many warnings during compilation.
@@ -91,8 +94,7 @@ NOTES
   To fix this, remove wrappthread.o from LIB_OBJS in "Make.defines" and
   don't try to build and run any of the threads programs.
 
-COMMON DIFFERENCES
-------------------
+## COMMON DIFFERENCES
 
 These are the common differences that I see in various headers that are
 not "yet" at the level of Posix.1g or X/Open XNS Issue 5.
