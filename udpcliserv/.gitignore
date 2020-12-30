@@ -4,5 +4,7 @@
 !*/
 # Unignore all with extensions
 !*.*
+# Unignore Makefile
+!Makefile
 # Ignore .o files
 *.o
