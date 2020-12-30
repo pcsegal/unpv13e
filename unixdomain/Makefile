@@ -1,7 +1,10 @@
 include ../Make.defines
 
+# Modification (by pcsegal): Removed tfcred01 and unixstrserv02 from 'all' (PROGS),
+# since they cause 'make' to stop with compilation error on Ubuntu 18.04 and FreeBSD 12.2.
+
 PROGS =	daytimetcpcli daytimetcpsrv2 mycat openfile \
-	tfcred01 unixbind unixstrcli01 unixstrserv01 unixstrserv02
+	unixbind unixstrcli01 unixstrserv01
 
 all:	${PROGS}
 
