@@ -1,5 +1,7 @@
 #include	"trace.h"
 
+/* Change (by pcsegal): Changed ICMP6_DST_UNREACH_NOTNEIGHBOR (obsolete) to ICMP6_DST_UNREACH_BEYONDSCOPE. */
+
 const char *
 icmpcode_v6(int code)
 {
@@ -10,8 +12,8 @@ icmpcode_v6(int code)
 		return("no route to host");
 	case  ICMP6_DST_UNREACH_ADMIN:
 		return("administratively prohibited");
-	case  ICMP6_DST_UNREACH_NOTNEIGHBOR:
-		return("not a neighbor");
+	case  ICMP6_DST_UNREACH_BEYONDSCOPE:
+		return("beyond scope");
 	case  ICMP6_DST_UNREACH_ADDR:
 		return("address unreachable");
 	case  ICMP6_DST_UNREACH_NOPORT:
