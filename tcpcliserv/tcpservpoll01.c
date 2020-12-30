@@ -1,6 +1,14 @@
 /* include fig01 */
 #include	"unp.h"
-#include	<limits.h>		/* for OPEN_MAX */
+
+/* Modification (by pcsegal): If OPEN_MAX is not defined, use FOPEN_MAX.
+FOPEN_MAX is the minimum number of files that the implementation guarantees can be open simultaneously. */
+
+#ifdef OPEN_MAX
+	#define MAX_FILES OPEN_MAX
+#else
+	#define MAX_FILES FOPEN_MAX
+#endif
 
 int
 main(int argc, char **argv)
@@ -10,7 +18,7 @@ main(int argc, char **argv)
 	ssize_t				n;
 	char				buf[MAXLINE];
 	socklen_t			clilen;
-	struct pollfd		client[OPEN_MAX];
+	struct pollfd		client[FOPEN_MAX];
 	struct sockaddr_in	cliaddr, servaddr;
 
 	listenfd = Socket(AF_INET, SOCK_STREAM, 0);
@@ -26,7 +34,7 @@ main(int argc, char **argv)
 
 	client[0].fd = listenfd;
 	client[0].events = POLLRDNORM;
-	for (i = 1; i < OPEN_MAX; i++)
+	for (i = 1; i < FOPEN_MAX; i++)
 		client[i].fd = -1;		/* -1 indicates available entry */
 	maxi = 0;					/* max index into client[] array */
 /* end fig01 */
@@ -42,12 +50,12 @@ main(int argc, char **argv)
 			printf("new client: %s\n", Sock_ntop((SA *) &cliaddr, clilen));
 #endif
 
-			for (i = 1; i < OPEN_MAX; i++)
+			for (i = 1; i < MAX_FILES; i++)
 				if (client[i].fd < 0) {
 					client[i].fd = connfd;	/* save descriptor */
 					break;
 				}
-			if (i == OPEN_MAX)
+			if (i == MAX_FILES)
 				err_quit("too many clients");
 
 			client[i].events = POLLRDNORM;
