@@ -28,7 +28,8 @@ send_dns_query(void)
 {
 	char				 qbuf[24], *ptr;
 	u_int16_t			 one;
-	int					 packet_size = LIBNET_UDP_H + LIBNET_DNSV4_H + 24;
+	// Change (by pcsegal): use LIBNET_UDP_DNSV4_H instead of LIBNET_DNSV4_H.
+	int					 packet_size = LIBNET_UDP_H + LIBNET_UDP_DNSV4_H + 24;
 	static libnet_ptag_t ip_tag, udp_tag, dns_tag;
 
 	/* build query portion of DNS packet */
@@ -41,7 +42,8 @@ send_dns_query(void)
 	memcpy(ptr, &one, 2);				/* query class = 1 (IP addr) */
 
 	/* build DNS packet */
-	dns_tag = libnet_build_dnsv4(
+	dns_tag = libnet_build_dnsv4( /* Change (by pcsegal): libnet_build_dnsv4 now requires an additional first argument (h_len). */
+			0 /* not used in the case of UDP  */,
 			1234 /* identification */,
 			0x0100 /* flags: recursion desired */,
 			1 /* # questions */, 	0 /* # answer RRs */,

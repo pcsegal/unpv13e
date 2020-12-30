@@ -13,62 +13,45 @@ open_output(void)
 	 * Also must set IP_HDRINCL so we can write our own IP headers.
 	 */
 
-	rawfd = Socket(dest->sa_family, SOCK_RAW, 0);
+	rawfd = Socket(dest->sa_family, SOCK_RAW, IPPROTO_UDP); // Change (by pcsegal): Original version had 0 instead of IPPROTO_UDP, but this doesn't work on Ubuntu 18.04.
 
 	Setsockopt(rawfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on));
 }
 /* end open_output_raw */
 
-/*
- * "buf" points to an empty IP/UDP header,
- * followed by "ulen" bytes of user data.
- */
+/* Change (by pcsegal): Rewrote udp_write to use udphdr and iphdr instead of udpiphdr, since udpiphdr doesn't work on Linux.
+Note: this version doesn't compute the UDP checksum, leaving it at zero instead. */
+void udp_write(char *buf, int userlen) {
 
-/* include udp_write */
-void
-udp_write(char *buf, int userlen)
-{
-	struct udpiphdr		*ui;
-	struct ip			*ip;
+  struct iphdr *ip = (struct iphdr *) buf;
+  struct udphdr *udp = (struct udphdr *) (buf + sizeof(struct iphdr));
 
-		/* 4fill in and checksum UDP header */
-	ip = (struct ip *) buf;
-	ui = (struct udpiphdr *) buf;
-	bzero(ui, sizeof(*ui));
-			/* 8add 8 to userlen for pseudoheader length */
-	ui->ui_len = htons((uint16_t) (sizeof(struct udphdr) + userlen));
-			/* 8then add 28 for IP datagram length */
-	userlen += sizeof(struct udpiphdr);
+      // fabricate the IP header
+  ip->ihl      = sizeof(struct iphdr) >> 2;
+  ip->version  = IPVERSION;
+  ip->tos      = 0;
+  ip->tot_len  = sizeof(struct iphdr) + sizeof(struct udphdr) + userlen;
+  ip->id       = 0;
+  ip->ttl      = TTL_OUT;
+  ip->protocol = IPPROTO_UDP;
 
-	ui->ui_pr = IPPROTO_UDP;
-	ui->ui_src.s_addr = ((struct sockaddr_in *) local)->sin_addr.s_addr;
-	ui->ui_dst.s_addr = ((struct sockaddr_in *) dest)->sin_addr.s_addr;
-	ui->ui_sport = ((struct sockaddr_in *) local)->sin_port;
-	ui->ui_dport = ((struct sockaddr_in *) dest)->sin_port;
-	ui->ui_ulen = ui->ui_len;
-	if (zerosum == 0) {
-#if 1	/* change to if 0 for Solaris 2.x, x < 6 */
-		if ( (ui->ui_sum = in_cksum((u_int16_t *) ui, userlen)) == 0)
-			ui->ui_sum = 0xffff;
-#else
-		ui->ui_sum = ui->ui_len;
-#endif
-	}
+  ip->saddr = ((struct sockaddr_in *) local)->sin_addr.s_addr;
+  ip->daddr = ((struct sockaddr_in *) dest)->sin_addr.s_addr;
 
-		/* 4fill in rest of IP header; */
-		/* 4ip_output() calcuates & stores IP header checksum */
-	ip->ip_v = IPVERSION;
-	ip->ip_hl = sizeof(struct ip) >> 2;
-	ip->ip_tos = 0;
-#if defined(linux) || defined(__OpenBSD__)
-	ip->ip_len = htons(userlen);	/* network byte order */
-#else
-	ip->ip_len = userlen;			/* host byte order */
-#endif
-	ip->ip_id = 0;			/* let IP set this */
-	ip->ip_off = 0;			/* frag offset, MF and DF flags */
-	ip->ip_ttl = TTL_OUT;
+  ip->check = 0;
 
-	Sendto(rawfd, buf, userlen, 0, dest, destlen);
+  // Source port number
+  udp->source = sock_get_port(local, sizeof(struct sockaddr_in));
+  // Destination port number
+  udp->dest = sock_get_port(dest, sizeof(struct sockaddr_in));
+  udp->len = htons(sizeof(struct udphdr) + userlen);
+  udp->check = 0;
+
+  // Calculate the IP checksum
+  ip->check = in_cksum((unsigned short *)buf,
+                   sizeof(struct iphdr) + sizeof(struct udphdr));
+
+	// TO DO: Calculate UDP checksum
+
+  Sendto(rawfd, buf, ip->tot_len, 0, (SA *) dest, destlen);
 }
-/* end udp_write */

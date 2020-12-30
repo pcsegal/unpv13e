@@ -1,12 +1,13 @@
 #include	"unp.h"
 #include	<pcap.h>
 
+/* Change (by pcsegal): Removed includes of netinet/ip_var.h and netinet/udp_var.h,
+since they don't work on Linux. */
+
 #include	<netinet/in_systm.h>	/* required for ip.h */
 #include	<netinet/in.h>
 #include	<netinet/ip.h>
-#include	<netinet/ip_var.h>
 #include	<netinet/udp.h>
-#include	<netinet/udp_var.h>
 #include	<net/if.h>
 #include	<netinet/if_ether.h>
 

@@ -5,6 +5,10 @@
  * the raw socket.
  */
 
+/* Change (by pcsegal): Use iphdr and udphdr instead of udpiphdr. */
+
+#define IP_UDP_HSIZ    (sizeof(struct iphdr) + sizeof(struct udphdr))
+
 /* include send_dns_query */
 void
 send_dns_query(void)
@@ -12,8 +16,8 @@ send_dns_query(void)
 	size_t		nbytes;
 	char		*buf, *ptr;
 
-	buf = Malloc(sizeof(struct udpiphdr) + 100);
-	ptr = buf + sizeof(struct udpiphdr);/* leave room for IP/UDP headers */
+	buf = Malloc(IP_UDP_HSIZ + 100);
+	ptr = buf + IP_UDP_HSIZ;  /* leave room for IP/UDP headers */
 
 	*((uint16_t *) ptr) = htons(1234);	/* identification */
 	ptr += 2;
@@ -35,7 +39,7 @@ send_dns_query(void)
 	*((uint16_t *) ptr) = htons(1);		/* query class = 1 (IP addr) */
 	ptr += 2;
 
-	nbytes = (ptr - buf) - sizeof(struct udpiphdr);
+	nbytes = (ptr - buf) - IP_UDP_HSIZ;
 	udp_write(buf, nbytes);
 	if (verbose)
 		printf("sent: %d bytes of data\n", nbytes);
