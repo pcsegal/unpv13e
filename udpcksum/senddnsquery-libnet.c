@@ -43,20 +43,30 @@ send_dns_query(void)
 
 	/* build DNS packet */
 	dns_tag = libnet_build_dnsv4( /* Change (by pcsegal): libnet_build_dnsv4 now requires an additional first argument (h_len). */
-			0 /* not used in the case of UDP  */,
+			LIBNET_UDP_DNSV4_H,
 			1234 /* identification */,
 			0x0100 /* flags: recursion desired */,
 			1 /* # questions */, 	0 /* # answer RRs */,
 			0 /* # authority RRs */, 0 /* # additional RRs */,
 			qbuf /* query */, 24 /* length of query */, l, dns_tag);
+
+	if (dns_tag == -1) { /* Change (by pcsegal): Added error check. */
+		err_quit("libnet_build_dnsv4 error: %s", libnet_geterror(l));
+	}
+
 	/* build UDP header */
-	udp_tag = libnet_build_udp(
-			((struct sockaddr_in *) local)->sin_port /* source port */,
-			((struct sockaddr_in *) dest)->sin_port /* dest port */,
+	udp_tag = libnet_build_udp( /* Change (by pcsegal): Source port and destination port must be in host byte order */
+			ntohs(((struct sockaddr_in *) local)->sin_port) /* source port */,
+			ntohs(((struct sockaddr_in *) dest)->sin_port) /* dest port */,
 			packet_size /* length */, 0 /* checksum */,
 			NULL /* payload */, 0 /* payload length */, l, udp_tag);
 	/* Since we specified the checksum as 0, libnet will automatically */
 	/* calculate the UDP checksum.  Turn it off if the user doesn't want it. */
+
+	if (udp_tag == -1) { /* Change (by pcsegal): Added error check. */
+		err_quit("libnet_build_udp error: %s", libnet_geterror(l));
+	}
+
 	if (zerosum)
 		if (libnet_toggle_checksum(l, udp_tag, LIBNET_OFF) < 0)
 			err_quit("turning off checksums: %s\n", libnet_geterror(l));
@@ -70,6 +80,10 @@ send_dns_query(void)
 			((struct sockaddr_in *) dest)->sin_addr.s_addr /* dest */,
 			NULL /* payload */, 0 /* payload length */, l, ip_tag);
 /* *INDENT-ON* */
+
+	if (ip_tag == -1) { /* Change (by pcsegal): Added error check. */
+		err_quit("libnet_build_ipv4 error: %s", libnet_geterror(l));
+	}
 
 	if (libnet_write(l) < 0) {
 		err_quit("libnet_write: %s\n", libnet_geterror(l));
