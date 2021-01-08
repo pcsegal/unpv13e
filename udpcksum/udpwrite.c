@@ -23,35 +23,36 @@ open_output(void)
 Note: this version doesn't compute the UDP checksum, leaving it at zero instead. */
 void udp_write(char *buf, int userlen) {
 
-  struct iphdr *ip = (struct iphdr *) buf;
-  struct udphdr *udp = (struct udphdr *) (buf + sizeof(struct iphdr));
+  struct ip *ip = (struct ip *) buf;
+  struct udphdr *udp = (struct udphdr *) (buf + sizeof(struct ip));
+  int ip_len = sizeof(struct ip) + sizeof(struct udphdr) + userlen;
 
       // fabricate the IP header
-  ip->ihl      = sizeof(struct iphdr) >> 2;
-  ip->version  = IPVERSION;
-  ip->tos      = 0;
-  ip->tot_len  = sizeof(struct iphdr) + sizeof(struct udphdr) + userlen;
-  ip->id       = 0;
-  ip->ttl      = TTL_OUT;
-  ip->protocol = IPPROTO_UDP;
+  ip->ip_hl   = sizeof(struct ip) >> 2;
+  ip->ip_v    = IPVERSION;
+  ip->ip_tos  = 0;
+  ip->ip_len  = htons(ip_len);
+  ip->ip_id   = 0;
+  ip->ip_ttl  = TTL_OUT;
+  ip->ip_p    = IPPROTO_UDP;
 
-  ip->saddr = ((struct sockaddr_in *) local)->sin_addr.s_addr;
-  ip->daddr = ((struct sockaddr_in *) dest)->sin_addr.s_addr;
+  ip->ip_src.s_addr  = ((struct sockaddr_in *) local)->sin_addr.s_addr;
+  ip->ip_dst.s_addr  = ((struct sockaddr_in *) dest)->sin_addr.s_addr;
 
-  ip->check = 0;
+  ip->ip_sum  = 0;
 
   // Source port number
-  udp->source = sock_get_port(local, sizeof(struct sockaddr_in));
+  udp->uh_sport = sock_get_port(local, sizeof(struct sockaddr_in));
   // Destination port number
-  udp->dest = sock_get_port(dest, sizeof(struct sockaddr_in));
-  udp->len = htons(sizeof(struct udphdr) + userlen);
-  udp->check = 0;
+  udp->uh_dport = sock_get_port(dest, sizeof(struct sockaddr_in));
+  udp->uh_ulen = htons(sizeof(struct udphdr) + userlen);
+  udp->uh_sum = 0;
 
   // Calculate the IP checksum
-  ip->check = in_cksum((unsigned short *)buf,
-                   sizeof(struct iphdr) + sizeof(struct udphdr));
+  ip->ip_sum = in_cksum((unsigned short *)buf,
+                   sizeof(struct ip) + sizeof(struct udphdr));
 
 	// TO DO: Calculate UDP checksum
 
-  Sendto(rawfd, buf, ip->tot_len, 0, (SA *) dest, destlen);
+  Sendto(rawfd, buf, ip_len, 0, (SA *) dest, destlen);
 }

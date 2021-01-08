@@ -5,9 +5,9 @@
  * the raw socket.
  */
 
-/* Change (by pcsegal): Use iphdr and udphdr instead of udpiphdr. */
+/* Change (by pcsegal): Use ip and udphdr instead of udpiphdr. */
 
-#define IP_UDP_HSIZ    (sizeof(struct iphdr) + sizeof(struct udphdr))
+#define IP_UDP_HSIZ    (sizeof(struct ip) + sizeof(struct udphdr))
 
 /* include send_dns_query */
 void

@@ -19,8 +19,8 @@ void
 test_udp(void)
 {
 	volatile int	nsent = 0, timeout = 3;
-	/* Change (by pcsegal): Use iphdr and udphdr instead of udpiphdr. */
-	struct iphdr *ui;
+	/* Change (by pcsegal): Use ip and udphdr instead of udpiphdr. */
+	struct ip *ui;
 	struct udphdr *udph;
 
 	Signal(SIGALRM, sig_alrm);
@@ -43,11 +43,11 @@ test_udp(void)
 
 	udph = (struct udphdr *)(ui + 1); // get UDP header
 
-	if (udph->check == 0)
+	if (udph->uh_sum == 0)
 		printf("UDP checksums off\n");
 	else
 		printf("UDP checksums on\n");
 	if (verbose)
-		printf("received UDP checksum = %x\n", ntohs(udph->check));
+		printf("received UDP checksum = %x\n", ntohs(udph->uh_sum));
 }
 /* end test_udp */
